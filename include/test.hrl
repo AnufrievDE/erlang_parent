@@ -1,0 +1,1 @@
+-define(timeout, 5000).
