@@ -180,7 +180,7 @@
     state()
 ) ->
     {noreply, NewState} |
-    {noreply, NewState, timeout() | hibernate} |
+    {noreply, NewState, timeout() | hibernate | {continue, term()}} |
     {stop, Reason :: term(), NewState}
 when
     NewState :: state().
