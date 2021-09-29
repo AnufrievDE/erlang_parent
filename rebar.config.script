@@ -1,5 +1,5 @@
 case os:getenv("EUNIT") of
-    false -> os:set_env_var("EUNIT","{order,inparallel}");
+    false -> os:putenv("EUNIT","{order,inparallel}");
     _ -> ok
 end,
 CONFIG.
