@@ -4,12 +4,11 @@
   {registered, []},
   {applications,
    [kernel,
-    stdlib,
-    erlando
+    stdlib
    ]},
   {env,[]},
   {modules, []},
 
-  {licenses, ["MIT"]},
+  {licenses, ["Apache 2.0"]},
   {links, []}
  ]}.

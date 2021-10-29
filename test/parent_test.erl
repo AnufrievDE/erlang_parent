@@ -1,13 +1,9 @@
 -module(parent_test).
 
--include("test.hrl").
-
--include_lib("kernel/include/logger.hrl").
+%-include_lib("kernel/include/logger.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
--define(task_child_spec, #{}).
-
--import(test_helper, [child_spec/2, receive_once/0, receive_once/1]).
+-import(test_helper, [receive_once/0, receive_once/1]).
 
 % "initialize/0_test() ->
 traps_exists_test() ->
@@ -18,8 +14,6 @@ traps_exists_test() ->
 raises_if_called_multiple_times_test() ->
     parent:initialize(),
     ?assertException(error, "Parent state is already initialized", parent:initialize()).
-
-%assert_raise RuntimeError, "Parent state is already initialized", fun parent:initialize/0).
 
 % "start_child_test() ->
 returns_the_pid_of_the_started_process_on_success_test() ->
@@ -76,7 +70,7 @@ fails_if_the_parent_is_not_initialized_test() ->
 stops_the_child_synchronously_handling_the_exit_message_test() ->
     parent:initialize(),
 
-    {ok, Child} = parent:start_child(child_spec(test_child, #{id => child})),
+    {ok, Child} = parent:start_child(test_child, #{id => child}),
 
     parent:shutdown_child(child),
     ?assertMatch(false, erlang:is_process_alive(Child)),
@@ -87,13 +81,8 @@ forcefully_terminates_the_child_if_shutdown_is_brutal_kill_test() ->
 
     {ok, Child} =
         parent:start_child(
-            child_spec(
-                {test_child, [{is_block_terminate, true}, {is_trap_exit, true}]},
-                #{
-                    id => child,
-                    shutdown => brutal_kill
-                }
-            )
+            {test_child, [{is_block_terminate, true}, {is_trap_exit, true}]},
+            #{id => child, shutdown => brutal_kill}
         ),
 
     erlang:monitor(process, Child),
@@ -105,13 +94,8 @@ forcefully_terminates_a_child_if_it_doesnt_stop_in_the_given_time_test() ->
 
     {ok, Child} =
         parent:start_child(
-            child_spec(
-                {test_child, [{is_block_terminate, true}, {is_trap_exit, true}]},
-                #{
-                    id => child,
-                    shutdown => 10
-                }
-            )
+            {test_child, [{is_block_terminate, true}, {is_trap_exit, true}]},
+            #{id => child, shutdown => 10}
         ),
 
     erlang:monitor(process, Child),
@@ -120,7 +104,7 @@ forcefully_terminates_a_child_if_it_doesnt_stop_in_the_given_time_test() ->
 
 fails_if_an_unknown_child_is_given_test() ->
     parent:initialize(),
-    ?assertException(error, "trying to terminate an unknown child", parent:shutdown_child(child)).
+    ?assertMatch(error, parent:shutdown_child(child)).
 
 fails_if_the_parent_is_not_initialized2_test() ->
     ?assertException(error, "Parent is not initialized", parent:shutdown_child(1)).
@@ -181,16 +165,16 @@ returns_child_processes_test() ->
     ?assert(parent:children() == []),
 
     Child1 = do_start_child(#{id => child1, meta => meta1}),
-    ?assert(parent:children() == [{child1, Child1, meta1}]),
+    ?assertMatch([#{id := child1, pid := Child1, meta := meta1}], parent:children()),
 
     Child2 = do_start_child(#{id => child2, meta => meta2}),
-    ?assertEqual(
-        [{child1, Child1, meta1}, {child2, Child2, meta2}],
-        parent:children()
-    ),
+    ?assertMatch([
+        #{id := child1, pid := Child1, meta := meta1},
+        #{id := child2, pid := Child2, meta := meta2}
+    ], parent:children()),
 
     parent:shutdown_child(child1),
-    ?assert(parent:children() == [{child2, Child2, meta2}]).
+    ?assertMatch([#{id := child2, pid := Child2, meta := meta2}], parent:children()).
 
 fails_if_the_parent_is_not_initialized5_test() ->
     ?assertException(error, "Parent is not initialized", parent:children()).
@@ -360,7 +344,7 @@ handles_supervisor_calls_test() ->
 
                fun() ->
                    ?assertEqual(
-                       [{active, 1}, {specs, 1}, {supervisors, 0}, {workers, 1}],
+                       [{specs, 1}, {active, 1}, {supervisors, 0}, {workers, 1}],
                        supervisor:count_children(Parent)
                    )
                end

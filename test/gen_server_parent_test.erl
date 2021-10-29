@@ -4,9 +4,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-%-import(test_helper, [receive_loop/0, receive_loop/1]).
-%-import(qq, [receive_loop/0, receive_loop/1]).
-
 init_test() ->
     {ok, Pid} = test_server:start_link(fun() -> initial_state end),
     ?assert(sys:get_state(Pid) == initial_state).
@@ -48,7 +45,6 @@ starting_a_child_test() ->
         id => ChildId,
         start => fun() -> {ok, spawn_link(fun test_helper:receive_loop/0)} end,
         %start => {erlang, spawn_link, [fun test_helper:receive_loop/0]},
-        %start => {?MODULE, test_helper:receive_loop, []},
         %start => {Agent, start_link, [fun() -> ok end]},
         type => worker
     }),
@@ -124,7 +120,7 @@ count_children_test() ->
     ),
 
     ?assert(
-        supervisor:count_children(Pid) == [{active, 2}, {specs, 2}, {supervisors, 1}, {workers, 1}]
+        supervisor:count_children(Pid) == [{specs, 2}, {active, 2}, {supervisors, 1}, {workers, 1}]
     ).
 
 get_callback_module_test() ->

@@ -6,6 +6,7 @@
 
 -export([
     start_link/1,
+    start_link/2,
     call/2,
     cast/2,
     send/2,
@@ -21,6 +22,8 @@
 ]).
 
 start_link(Initializer) -> gen_server_parent:start_link(?MODULE, Initializer).
+start_link(ServerName, Initializer) ->
+    gen_server_parent:start_link(ServerName, ?MODULE, Initializer, []).
 
 call(Pid, Fun) -> gen_server:call(Pid, Fun).
 
@@ -30,23 +33,23 @@ send(Pid, Fun) -> Pid ! Fun.
 
 terminated_jobs() -> get(terminated_jobs).
 
-%  @impl GenServer
+% @impl GenServer
 init(Initializer) ->
     put(terminated_jobs, []),
     {ok, Initializer()}.
 
-%  @impl GenServer
+% @impl GenServer
 handle_call(Fun, _From, State) ->
     {Response, NewState} = Fun(State),
     {reply, Response, NewState}.
 
-%  @impl GenServer
+% @impl GenServer
 handle_cast(Fun, State) -> {noreply, Fun(State)}.
 
-%  @impl GenServer
+% @impl GenServer
 handle_info(Fun, State) -> {noreply, Fun(State)}.
 
-%  @impl Parent.GenServer
+% @impl Parent.GenServer
 handle_child_terminated(Id, Meta, Pid, Reason, State) ->
     TerminationInfo = #{id => Id, meta => Meta, pid => Pid, reason => Reason},
     put(terminated_jobs, [TerminationInfo | get(terminated_jobs)]),
